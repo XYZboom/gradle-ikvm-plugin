@@ -14,7 +14,6 @@ class IkvmPlugin : Plugin<Project> {
 
     override fun apply(target: Project) {
         target.extensions.create("ikvm", IkvmExtension::class.java)
-        target.extensions.create("ikvmc", IkvmcExtension::class.java)
         target.tasks.register("ikvmc", IkvmcTask::class.java) {
             group = "ikvm"
             dependsOn("jar")
@@ -40,22 +39,25 @@ class IkvmPlugin : Plugin<Project> {
             }
         }
         target.tasks.withType(IkvmcTask::class.java) {
-            val ikvmExtension = target.extensions.getByType(IkvmExtension::class.java)
-            val ikvmcExtension: IkvmcExtension = try {
-                @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-                ikvmExtension.ikvmcExtension!!
-            } catch (e: Exception) {
-                when (e) {
-                    is UninitializedPropertyAccessException, is NullPointerException -> {
-                        ikvmExtension.ikvmcExtension =
-                            target.extensions.getByType(IkvmcExtension::class.java)
-                        ikvmExtension.ikvmcExtension
-                    }
+            doFirst {
+                this as IkvmcTask
+                val ikvmExtension = target.extensions.getByType(IkvmExtension::class.java)
+                val ikvmcConfiguration: IkvmcConfiguration = try {
+                    @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
+                    ikvmExtension.ikvmcConfiguration!!
+                } catch (e: Exception) {
+                    when (e) {
+                        is UninitializedPropertyAccessException, is NullPointerException -> {
+                            logger.warn("ikvmc configuration not found, use defalut")
+                            ikvmExtension.ikvmcConfiguration = IkvmcConfiguration(project)
+                            ikvmExtension.ikvmcConfiguration
+                        }
 
-                    else -> throw e
+                        else -> throw e
+                    }
                 }
+                this.ikvmcConfiguration = ikvmcConfiguration
             }
-            this.ikvmcExtension = ikvmcExtension
         }
     }
 }
