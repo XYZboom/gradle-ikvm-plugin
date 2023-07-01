@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.7.22"
+    `kotlin-dsl`
     id("maven-publish")
     id("java-gradle-plugin")
 }
@@ -35,7 +36,7 @@ repositories {
 
 dependencies {
     implementation(gradleApi())
-    implementation(kotlin("stdlib-jdk8"))
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.22")
 }
 
 tasks.test {
