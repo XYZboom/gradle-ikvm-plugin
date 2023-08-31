@@ -8,13 +8,13 @@ plugins {
 }
 
 group = "com.xyzboom.ikvm"
-version = "0.0.1"
+version = "0.0.2"
 
 gradlePlugin {
     plugins.create("gradle-ikvm-plugin") {
         id = "com.xyzboom.ikvm.gradle-ikvm-plugin"
         implementationClass = "com.xyzboom.ikvm.gradle.IkvmPlugin"
-        version = "0.0.1"
+        version = "0.0.2"
     }
 }
 
@@ -23,7 +23,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "com.xyzboom.ikvm"
             artifactId = "gradle-ikvm-plugin"
-            version = "0.0.1"
+            version = "0.0.2"
 
             from(components["java"])
         }

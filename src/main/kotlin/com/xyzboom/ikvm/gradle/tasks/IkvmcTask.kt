@@ -4,7 +4,6 @@ import com.xyzboom.ikvm.gradle.IkvmcConfiguration
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.jvm.tasks.Jar
-import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.getByName
 import java.io.File
 
@@ -19,16 +18,24 @@ open class IkvmcTask : IkvmTask() {
     @get:Internal
     internal lateinit var args: MutableList<String>
 
+    @get:Internal
+    internal lateinit var mergeArgs: MutableList<String>
+
     companion object {
         const val ArgAssemblyPrefix = "-assembly:"
+        const val ArgClassLoaderPrefix = "-classloader:"
         const val ArgOutputPrefix = "-out:"
         const val ArgReferencePrefix = "-r:"
+        const val ArgKeyFilePrefix = "-keyfile:"
     }
 
     private fun handleClassLoader() {
         try {
             val classLoader = ikvmcConfiguration.classLoader
-            args.add("-classloader:$classLoader")
+            args.add("$ArgClassLoaderPrefix$classLoader")
+            if (::mergeArgs.isInitialized) {
+                mergeArgs.add("$ArgClassLoaderPrefix$classLoader")
+            }
         } catch (e: Exception) {
             when (e) {
                 is UninitializedPropertyAccessException, is NullPointerException -> {
@@ -67,15 +74,24 @@ open class IkvmcTask : IkvmTask() {
                 val mergeName = ikvmcConfiguration.dependenciesConfig.mergeName
                 val dependDllPath = "${jarFile.parentFile.absolutePath}/$mergeName.dll"
                 dependDlls.add(dependDllPath)
-                project.exec {
-                    commandLine(
-                        ikvmcExe.absolutePath, *jarFiles.toTypedArray(),
-                        "$ArgAssemblyPrefix$mergeName",
-                        "$ArgOutputPrefix$dependDllPath"
-                    )
-                }
+                mergeArgs = arrayListOf(
+                    ikvmcExe.absolutePath, *jarFiles.toTypedArray(),
+                    "$ArgAssemblyPrefix$mergeName",
+                    "$ArgOutputPrefix$dependDllPath"
+                )
             }
             args.addAll(dependDlls.map { "$ArgReferencePrefix$it" })
+        }
+    }
+
+    private fun handleKeyFile() {
+        val keyFile = System.getenv("IKVM.KEYFILE") ?: kotlin.run {
+            println("no key file found in system env IKVM.KEYFILE")
+        }
+        println("key file in system env is $keyFile")
+        args.add("$ArgKeyFilePrefix$keyFile")
+        if (::mergeArgs.isInitialized) {
+            mergeArgs.add("$ArgKeyFilePrefix$keyFile")
         }
     }
 
@@ -84,12 +100,20 @@ open class IkvmcTask : IkvmTask() {
         initIkvmEnv()
         jarFile = project.tasks.getByName<Jar>("jar").archiveFile.get().asFile
         args = arrayListOf(ikvmcExe.toString(), jarFile.absolutePath)
-        handleClassLoader()
         handleAssembly()
         handleDependencies()
+        handleClassLoader()
+        handleKeyFile()
         args.addAll(ikvmcConfiguration.extraCmdArgs)
         val myArgs = args
+        if (this@IkvmcTask::mergeArgs.isInitialized) {
+            project.exec {
+                println("exec merge: ${myArgs.joinToString(" ")}")
+                commandLine(mergeArgs)
+            }
+        }
         project.exec {
+            println("exec: ${myArgs.joinToString(" ")}")
             commandLine(myArgs)
         }
     }
