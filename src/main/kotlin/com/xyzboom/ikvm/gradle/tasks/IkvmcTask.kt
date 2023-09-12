@@ -22,12 +22,14 @@ open class IkvmcTask : IkvmTask() {
     internal lateinit var mergeArgs: MutableList<String>
 
     companion object {
+        private const val PropertyKeyPrefix = "ikvmc."
+        const val PropertyDebugKey = "${PropertyKeyPrefix}debug"
         const val ArgAssemblyPrefix = "-assembly:"
         const val ArgClassLoaderPrefix = "-classloader:"
         const val ArgOutputPrefix = "-out:"
         const val ArgReferencePrefix = "-r:"
         const val ArgKeyFilePrefix = "-keyfile:"
-
+        const val ArgDebug = "-debug"
     }
 
     private fun handleClassLoader() {
@@ -97,6 +99,23 @@ open class IkvmcTask : IkvmTask() {
         }
     }
 
+    private fun handleDebug() {
+        val debug = try {
+            ikvmcConfiguration.debug
+        } catch (e: Exception) {
+            project.properties[PropertyDebugKey].toString().toBoolean()
+        }
+        if (debug) {
+            println("ikvmc debug enabled")
+            args.add(ArgDebug)
+            if (::mergeArgs.isInitialized) {
+                mergeArgs.add(ArgDebug)
+            }
+        } else {
+            println("ikvmc debug disabled")
+        }
+    }
+
     @TaskAction
     fun doIkvmCompile() {
         initIkvmEnv()
@@ -106,6 +125,7 @@ open class IkvmcTask : IkvmTask() {
         handleDependencies()
         handleClassLoader()
         handleKeyFile()
+        handleDebug()
         args.addAll(ikvmcConfiguration.extraCmdArgs)
         val myArgs = args
         if (this@IkvmcTask::mergeArgs.isInitialized) {

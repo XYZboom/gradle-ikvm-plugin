@@ -1,6 +1,7 @@
 package com.xyzboom.ikvm.gradle
 
 import org.gradle.api.Project
+import kotlin.properties.Delegates
 
 open class IkvmcConfiguration(private val project: Project) {
     open inner class IkvmcDependenciesConfig {
@@ -12,6 +13,7 @@ open class IkvmcConfiguration(private val project: Project) {
     lateinit var classLoader: String
     lateinit var assembly: String
     var signWithKeyFile = true
+    var debug by Delegates.notNull<Boolean>()
     internal var dependenciesConfig: IkvmcDependenciesConfig = IkvmcDependenciesConfig()
 
     val extraCmdArgs = ArrayList<String>()
