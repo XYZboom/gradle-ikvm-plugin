@@ -11,6 +11,7 @@ open class IkvmcConfiguration(private val project: Project) {
 
     lateinit var classLoader: String
     lateinit var assembly: String
+    var signWithKeyFile = true
     internal var dependenciesConfig: IkvmcDependenciesConfig = IkvmcDependenciesConfig()
 
     val extraCmdArgs = ArrayList<String>()

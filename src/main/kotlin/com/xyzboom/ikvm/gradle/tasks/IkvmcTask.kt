@@ -27,6 +27,7 @@ open class IkvmcTask : IkvmTask() {
         const val ArgOutputPrefix = "-out:"
         const val ArgReferencePrefix = "-r:"
         const val ArgKeyFilePrefix = "-keyfile:"
+
     }
 
     private fun handleClassLoader() {
@@ -85,6 +86,7 @@ open class IkvmcTask : IkvmTask() {
     }
 
     private fun handleKeyFile() {
+        if (!ikvmcConfiguration.signWithKeyFile) return
         val keyFile = System.getenv("IKVM.KEYFILE") ?: kotlin.run {
             println("no key file found in system env IKVM.KEYFILE")
         }
